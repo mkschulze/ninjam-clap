@@ -1,0 +1,15 @@
+[submodule "libs/clap"]
+	path = libs/clap
+	url = https://github.com/free-audio/clap.git
+[submodule "libs/clap-helpers"]
+	path = libs/clap-helpers
+	url = https://github.com/free-audio/clap-helpers.git
+[submodule "libs/imgui"]
+	path = libs/imgui
+	url = https://github.com/ocornut/imgui.git
+[submodule "libs/libogg"]
+	path = libs/libogg
+	url = https://github.com/xiph/ogg.git
+[submodule "libs/libvorbis"]
+	path = libs/libvorbis
+	url = https://github.com/xiph/vorbis.git
