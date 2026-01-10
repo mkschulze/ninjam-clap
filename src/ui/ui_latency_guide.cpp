@@ -63,7 +63,7 @@ void ui_render_latency_guide(ninjam::NinjamPlugin* plugin) {
 
     ImGui::SetNextItemWidth(200.0f);
     ImGui::SliderFloat("Threshold##latency", &state.transient_threshold,
-                       0.05f, 0.8f, "%.2f");
+                       0.01f, 0.5f, "%.2f");
 
     if (plugin->ui_snapshot.transient_detected.load(std::memory_order_acquire)) {
         const float offset =

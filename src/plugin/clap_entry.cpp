@@ -317,24 +317,6 @@ static clap_process_status plugin_process(const clap_plugin_t* clap_plugin,
         int status = client->cached_status.load(std::memory_order_acquire);
 
         if (status == NJClient::NJC_STATUS_OK) {
-            bool just_monitor = !is_playing;
-            client->AudioProc(
-                in, 2, out, 2,
-                static_cast<int>(frames),
-                static_cast<int>(plugin->sample_rate),
-                just_monitor, is_playing, is_seek, cursor_pos
-            );
-
-            // Update VU snapshot for UI
-            plugin->ui_snapshot.master_vu_left.store(
-                client->GetOutputPeak(0), std::memory_order_relaxed);
-            plugin->ui_snapshot.master_vu_right.store(
-                client->GetOutputPeak(1), std::memory_order_relaxed);
-            plugin->ui_snapshot.local_vu_left.store(
-                client->GetLocalChannelPeak(0, 0), std::memory_order_relaxed);
-            plugin->ui_snapshot.local_vu_right.store(
-                client->GetLocalChannelPeak(0, 1), std::memory_order_relaxed);
-
             if (is_playing && plugin->sample_rate > 0.0) {
                 const float threshold =
                     plugin->ui_snapshot.transient_threshold.load(
@@ -434,6 +416,24 @@ static clap_process_status plugin_process(const clap_plugin_t* clap_plugin,
                     }
                 }
             }
+
+            bool just_monitor = !is_playing;
+            client->AudioProc(
+                in, 2, out, 2,
+                static_cast<int>(frames),
+                static_cast<int>(plugin->sample_rate),
+                just_monitor, is_playing, is_seek, cursor_pos
+            );
+
+            // Update VU snapshot for UI
+            plugin->ui_snapshot.master_vu_left.store(
+                client->GetOutputPeak(0), std::memory_order_relaxed);
+            plugin->ui_snapshot.master_vu_right.store(
+                client->GetOutputPeak(1), std::memory_order_relaxed);
+            plugin->ui_snapshot.local_vu_left.store(
+                client->GetLocalChannelPeak(0, 0), std::memory_order_relaxed);
+            plugin->ui_snapshot.local_vu_right.store(
+                client->GetLocalChannelPeak(0, 1), std::memory_order_relaxed);
 
             return CLAP_PROCESS_CONTINUE;
         }

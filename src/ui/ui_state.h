@@ -54,7 +54,7 @@ struct UiState {
     bool local_solo = false;
     float local_vu_left = 0.0f;
     float local_vu_right = 0.0f;
-    float transient_threshold = 0.3f;
+    float transient_threshold = 0.12f;
     bool show_latency_guide = true;
     std::array<float, kLatencyHistorySize> latency_history{};
     int latency_history_index = 0;
@@ -91,7 +91,7 @@ struct UiAtomicSnapshot {
     std::atomic<int>   beat_position{0};
     std::atomic<float> last_transient_beat_offset{0.0f};
     std::atomic<bool>  transient_detected{false};
-    std::atomic<float> transient_threshold{0.3f};
+    std::atomic<float> transient_threshold{0.12f};
 
     // VU levels (audio thread writes)
     std::atomic<float> master_vu_left{0.0f};
