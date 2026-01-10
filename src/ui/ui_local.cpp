@@ -143,7 +143,7 @@ void ui_render_local_channel(ninjam::NinjamPlugin* plugin) {
 
     if (state.status == NJClient::NJC_STATUS_OK) {
         ImGui::Spacing();
-        ImGui::Checkbox("Timing Guide", &state.show_latency_guide);
+        ImGui::Checkbox("Timing Guide##toggle", &state.show_latency_guide);
         if (state.show_latency_guide) {
             ui_render_latency_guide(plugin);
         }

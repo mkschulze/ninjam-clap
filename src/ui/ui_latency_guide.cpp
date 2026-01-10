@@ -54,7 +54,8 @@ void ui_render_latency_guide(ninjam::NinjamPlugin* plugin) {
     if (!plugin) return;
 
     auto& state = plugin->ui_state;
-    if (!ImGui::CollapsingHeader("Timing Guide", ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (!ImGui::CollapsingHeader("Timing Guide##panel",
+                                 ImGuiTreeNodeFlags_DefaultOpen)) {
         return;
     }
 
