@@ -139,7 +139,7 @@ Copy `JamWide.clap` to one of:
 
 ## Project Status
 
-🚧 **In Active Development** (Build r44+)
+🚧 **In Active Development** (Build r96+)
 
 ### Completed
 - [x] Core NJClient port (audio engine, networking)
@@ -154,11 +154,12 @@ Copy `JamWide.clap` to one of:
 - [x] Chat room with message history and timestamps
 - [x] Visual timing guide for beat alignment feedback
 - [x] Anonymous login support (auto-prefix for public servers)
+- [x] Multi-format builds (CLAP, VST3, Audio Unit v2)
+- [x] Windows keyboard/focus handling fixes
 
 ### In Progress
 - [ ] Multi-instance support improvements
 - [ ] End-to-end audio testing with other musicians
-- [ ] Timing guide polish (tooltips, color-coded dots)
 
 ### Planned
 - [ ] Linux support (X11/Wayland + OpenGL)

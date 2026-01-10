@@ -6,7 +6,7 @@
 **Phase:** 5 - Integration & Polish  
 **Status:** ✅ Multi-format build working (CLAP, VST3, AU v2)
 
-## Latest Build: r92+ (DEV BUILD)
+## Latest Build: r96 (DEV BUILD)
 
 ### What's Working
 - ✅ Plugin loads in REAPER and Bitwig
@@ -20,14 +20,15 @@
 - ✅ Visual timing guide with beat grid and transient dots
 - ✅ Anonymous login (auto-prefix for public servers)
 - ✅ Dev/Production build toggle
+- ✅ Windows keyboard/focus handling
 
-### Recent Changes (r90-r92)
+### Recent Changes (r95-r96)
 | Change | Details |
 |--------|--------|
-| Multi-format builds | Integrated clap-wrapper for VST3 + AU v2 |
-| CLAP-first pattern | Split into static impl library + entry export |
-| AUv2 codes | Manufacturer: JMWD, Subtype: JWAU, Type: aufx |
-| Bundle identifier | com.jamwide.client |
+| JamWide rename | Full rebrand from ninjam-clap |
+| Windows keyboard fixes | WS_TABSTOP, WM_GETDLGCODE, focus handling |
+| Windows UTF-8 | Proper file path handling via WDL |
+| Jesusonic disabled | Not needed for CLAP plugin |
 
 ### Previous Fixes (r85-r90)
 | Issue | Fix |
