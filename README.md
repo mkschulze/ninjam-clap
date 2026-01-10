@@ -198,6 +198,16 @@ Contributions are welcome! Please feel free to submit issues and pull requests.
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
+
+### UI ID Check
+
+To avoid Dear ImGui ID collisions, run the local checker:
+
+```bash
+python3 tools/check_imgui_ids.py
+```
+
+It flags unscoped widget labels that are not wrapped in `ImGui::PushID(...)`.
 5. Open a Pull Request
 
 ## License
