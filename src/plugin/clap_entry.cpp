@@ -335,6 +335,106 @@ static clap_process_status plugin_process(const clap_plugin_t* clap_plugin,
             plugin->ui_snapshot.local_vu_right.store(
                 client->GetLocalChannelPeak(0, 1), std::memory_order_relaxed);
 
+            if (is_playing && plugin->sample_rate > 0.0) {
+                const float threshold =
+                    plugin->ui_snapshot.transient_threshold.load(
+                        std::memory_order_relaxed);
+
+                if (threshold > 0.0f) {
+                    constexpr float kReleaseCoeff = 0.985f;
+                    constexpr float kHysteresisRatio = 0.6f;
+                    constexpr float kEdgeRatio = 0.7f;
+                    constexpr float kDriftSnapThreshold = 0.08f;
+                    constexpr float kDriftTauMs = 120.0f;
+                    constexpr float kMinGapMs = 40.0f;
+
+                    const int min_gap_samples =
+                        static_cast<int>(plugin->sample_rate * kMinGapMs / 1000.0);
+
+                    const float bpm = plugin->ui_snapshot.bpm.load(
+                        std::memory_order_relaxed);
+                    const int bpi = plugin->ui_snapshot.bpi.load(
+                        std::memory_order_relaxed);
+                    const int pos = plugin->ui_snapshot.interval_position.load(
+                        std::memory_order_relaxed);
+                    const int len = plugin->ui_snapshot.interval_length.load(
+                        std::memory_order_relaxed);
+
+                    if (bpm > 1.0f) {
+                        plugin->transient.samples_per_beat =
+                            (plugin->sample_rate * 60.0) / bpm;
+                    }
+
+                    if (len > 0 && bpi > 0) {
+                        const double interval_phase =
+                            static_cast<double>(pos) / static_cast<double>(len);
+                        double snapshot_phase = std::fmod(interval_phase * bpi, 1.0);
+
+                        auto wrap = [](double x) {
+                            while (x > 0.5) x -= 1.0;
+                            while (x < -0.5) x += 1.0;
+                            return x;
+                        };
+
+                        const double drift =
+                            wrap(snapshot_phase - plugin->transient.beat_phase);
+                        if (std::fabs(drift) > kDriftSnapThreshold) {
+                            plugin->transient.beat_phase = snapshot_phase;
+                        } else {
+                            const double block_ms =
+                                (static_cast<double>(frames) * 1000.0) /
+                                plugin->sample_rate;
+                            const double correction =
+                                1.0 - std::exp(-block_ms / kDriftTauMs);
+                            plugin->transient.beat_phase += drift * correction;
+                        }
+                    }
+
+                    const double samples_per_beat =
+                        plugin->transient.samples_per_beat;
+                    const double phase_per_sample =
+                        samples_per_beat > 0.0 ? (1.0 / samples_per_beat) : 0.0;
+
+                    for (uint32_t i = 0; i < frames; ++i) {
+                        const float mono = std::max(
+                            std::fabs(in[0][i]), std::fabs(in[1][i]));
+
+                        const float prev_env = plugin->transient.env;
+                        plugin->transient.env = std::max(
+                            mono, plugin->transient.env * kReleaseCoeff);
+
+                        if (plugin->transient.gate_open &&
+                            plugin->transient.env > threshold &&
+                            prev_env < threshold * kEdgeRatio &&
+                            plugin->transient.samples_since_trigger > min_gap_samples) {
+                            const float offset =
+                                static_cast<float>(plugin->transient.beat_phase - 0.5);
+                            plugin->ui_snapshot.last_transient_beat_offset.store(
+                                offset, std::memory_order_relaxed);
+                            plugin->ui_snapshot.transient_detected.store(
+                                true, std::memory_order_release);
+
+                            plugin->transient.gate_open = false;
+                            plugin->transient.samples_since_trigger = 0;
+                        }
+
+                        if (!plugin->transient.gate_open &&
+                            plugin->transient.env < threshold * kHysteresisRatio) {
+                            plugin->transient.gate_open = true;
+                        }
+
+                        plugin->transient.beat_phase += phase_per_sample;
+                        if (plugin->transient.beat_phase >= 1.0) {
+                            plugin->transient.beat_phase -= 1.0;
+                        } else if (plugin->transient.beat_phase < 0.0) {
+                            plugin->transient.beat_phase += 1.0;
+                        }
+
+                        plugin->transient.samples_since_trigger++;
+                    }
+                }
+            }
+
             return CLAP_PROCESS_CONTINUE;
         }
     }

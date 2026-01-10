@@ -72,6 +72,15 @@ struct NinjamPlugin {
     double sample_rate{48000.0};
     uint32_t max_frames{512};
     bool serialize_audio_proc{false}; // Diagnostic: serialize AudioProc with client_mutex.
+
+    struct TransientDetector {
+        float env{0.0f};
+        bool gate_open{true};
+        int samples_since_trigger{0};
+        double beat_phase{0.0};
+        double samples_per_beat{48000.0};
+    };
+    TransientDetector transient;
     
     // =========== Connection Settings ===========
     

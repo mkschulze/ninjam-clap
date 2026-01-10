@@ -120,6 +120,7 @@ add_library(ninjam-ui STATIC
     src/ui/ui_connection.cpp
     src/ui/ui_server_browser.cpp
     src/ui/ui_local.cpp
+    src/ui/ui_latency_guide.cpp
     src/ui/ui_master.cpp
     src/ui/ui_remote.cpp
     src/ui/ui_meters.cpp

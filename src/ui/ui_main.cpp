@@ -41,8 +41,15 @@ void ui_render_frame(NinjamPlugin* plugin) {
             using T = std::decay_t<decltype(e)>;
 
             if constexpr (std::is_same_v<T, StatusChangedEvent>) {
+                const int prev_status = plugin->ui_state.status;
                 plugin->ui_state.status = e.status;
                 plugin->ui_state.connection_error = e.error_msg;
+                if (prev_status == NJClient::NJC_STATUS_OK &&
+                    e.status != NJClient::NJC_STATUS_OK) {
+                    plugin->ui_state.latency_history.fill(0.0f);
+                    plugin->ui_state.latency_history_index = 0;
+                    plugin->ui_state.latency_history_count = 0;
+                }
             }
             else if constexpr (std::is_same_v<T, UserInfoChangedEvent>) {
                 plugin->ui_state.users_dirty = true;
@@ -72,10 +79,22 @@ void ui_render_frame(NinjamPlugin* plugin) {
     }
 
     if (plugin->ui_state.status == NJClient::NJC_STATUS_OK) {
-        plugin->ui_state.bpm =
+        const float new_bpm =
             plugin->ui_snapshot.bpm.load(std::memory_order_relaxed);
-        plugin->ui_state.bpi =
+        const int new_bpi =
             plugin->ui_snapshot.bpi.load(std::memory_order_relaxed);
+
+        if ((plugin->ui_state.bpm > 0.0f && new_bpm > 0.0f &&
+             std::fabs(plugin->ui_state.bpm - new_bpm) > 0.001f) ||
+            (plugin->ui_state.bpi > 0 && new_bpi > 0 &&
+             plugin->ui_state.bpi != new_bpi)) {
+            plugin->ui_state.latency_history.fill(0.0f);
+            plugin->ui_state.latency_history_index = 0;
+            plugin->ui_state.latency_history_count = 0;
+        }
+
+        plugin->ui_state.bpm = new_bpm;
+        plugin->ui_state.bpi = new_bpi;
         plugin->ui_state.interval_position =
             plugin->ui_snapshot.interval_position.load(std::memory_order_relaxed);
         plugin->ui_state.interval_length =
@@ -83,6 +102,15 @@ void ui_render_frame(NinjamPlugin* plugin) {
         plugin->ui_state.beat_position =
             plugin->ui_snapshot.beat_position.load(std::memory_order_relaxed);
     }
+
+    float threshold = plugin->ui_state.transient_threshold;
+    if (threshold < 0.0f) {
+        threshold = 0.0f;
+    } else if (threshold > 1.0f) {
+        threshold = 1.0f;
+    }
+    plugin->ui_snapshot.transient_threshold.store(
+        threshold, std::memory_order_relaxed);
 
     // Create main window (fills entire area)
     ImGuiViewport* viewport = ImGui::GetMainViewport();

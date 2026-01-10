@@ -5,6 +5,7 @@
 
 #include "ui_local.h"
 #include "ui_meters.h"
+#include "ui_latency_guide.h"
 #include "ui_util.h"
 #include "threading/ui_command.h"
 #include "plugin/ninjam_plugin.h"
@@ -139,6 +140,14 @@ void ui_render_local_channel(ninjam::NinjamPlugin* plugin) {
     float vu_right = plugin->ui_snapshot.local_vu_right.load(
         std::memory_order_relaxed);
     render_vu_meter("##local_vu", vu_left, vu_right);
+
+    if (state.status == NJClient::NJC_STATUS_OK) {
+        ImGui::Spacing();
+        ImGui::Checkbox("Timing Guide", &state.show_latency_guide);
+        if (state.show_latency_guide) {
+            ui_render_latency_guide(plugin);
+        }
+    }
 
     ImGui::Unindent();
 }

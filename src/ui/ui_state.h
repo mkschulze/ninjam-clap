@@ -1,6 +1,7 @@
 #ifndef UI_STATE_H
 #define UI_STATE_H
 
+#include <array>
 #include <atomic>
 #include <string>
 #include <vector>
@@ -26,6 +27,7 @@ struct UiRemoteUser {
 };
 
 struct UiState {
+    static constexpr int kLatencyHistorySize = 16;
     // Connection
     char server_input[256] = "";
     char username_input[64] = "";
@@ -52,6 +54,11 @@ struct UiState {
     bool local_solo = false;
     float local_vu_left = 0.0f;
     float local_vu_right = 0.0f;
+    float transient_threshold = 0.3f;
+    bool show_latency_guide = true;
+    std::array<float, kLatencyHistorySize> latency_history{};
+    int latency_history_index = 0;
+    int latency_history_count = 0;
 
     // Master
     float master_vu_left = 0.0f;
@@ -82,6 +89,9 @@ struct UiAtomicSnapshot {
     std::atomic<int>   interval_position{0};
     std::atomic<int>   interval_length{0};
     std::atomic<int>   beat_position{0};
+    std::atomic<float> last_transient_beat_offset{0.0f};
+    std::atomic<bool>  transient_detected{false};
+    std::atomic<float> transient_threshold{0.3f};
 
     // VU levels (audio thread writes)
     std::atomic<float> master_vu_left{0.0f};
