@@ -42,3 +42,7 @@
 
 # Build outputs
 build/
+build-release/
+logs/
+*.DS_Store
+*.log
