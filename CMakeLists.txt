@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.20)
-project(ninjam-clap VERSION 1.0.0 LANGUAGES C CXX)
+project(jamwide VERSION 1.0.0 LANGUAGES C CXX)
 
 if(APPLE)
     enable_language(OBJC)
     enable_language(OBJCXX)
-    option(NINJAM_CLAP_UNIVERSAL "Build universal binary (arm64 + x86_64)" ON)
-    if(NINJAM_CLAP_UNIVERSAL)
+    option(JAMWIDE_UNIVERSAL "Build universal binary (arm64 + x86_64)" ON)
+    if(JAMWIDE_UNIVERSAL)
         if(NOT DEFINED CMAKE_OSX_ARCHITECTURES OR CMAKE_OSX_ARCHITECTURES STREQUAL "")
             set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "macOS architectures" FORCE)
         endif()
@@ -17,12 +17,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Options
-option(NINJAM_CLAP_BUILD_TESTS "Build tests" OFF)
-option(NINJAM_CLAP_DEV_BUILD "Enable development build with verbose logging" ON)
+option(JAMWIDE_BUILD_TESTS "Build tests" OFF)
+option(JAMWIDE_DEV_BUILD "Enable development build with verbose logging" ON)
 
 # Submodules
 add_subdirectory(libs/clap EXCLUDE_FROM_ALL)
 add_subdirectory(libs/clap-helpers EXCLUDE_FROM_ALL)
+add_subdirectory(libs/clap-wrapper EXCLUDE_FROM_ALL)
 
 # libogg
 set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
@@ -80,7 +81,6 @@ add_library(wdl STATIC
 )
 target_include_directories(wdl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/wdl)
 if(WIN32)
-    target_sources(wdl PRIVATE wdl/win32_utf8.c)
     target_link_libraries(wdl PUBLIC ws2_32)
 endif()
 
@@ -96,26 +96,26 @@ target_include_directories(njclient PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 target_link_libraries(njclient PUBLIC wdl vorbis vorbisenc ogg)
-if(NINJAM_CLAP_DEV_BUILD)
-    target_compile_definitions(njclient PRIVATE NINJAM_DEV_BUILD=1)
+if(JAMWIDE_DEV_BUILD)
+    target_compile_definitions(njclient PRIVATE JAMWIDE_DEV_BUILD=1)
 endif()
 
 # Threading library
-add_library(ninjam-threading STATIC
+add_library(jamwide-threading STATIC
     src/threading/run_thread.cpp
     src/net/server_list.cpp
 )
-target_include_directories(ninjam-threading PUBLIC
+target_include_directories(jamwide-threading PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
-target_link_libraries(ninjam-threading PUBLIC clap)
-if(NINJAM_CLAP_DEV_BUILD)
-    target_compile_definitions(ninjam-threading PRIVATE NINJAM_DEV_BUILD=1)
+target_link_libraries(jamwide-threading PUBLIC clap)
+if(JAMWIDE_DEV_BUILD)
+    target_compile_definitions(jamwide-threading PRIVATE JAMWIDE_DEV_BUILD=1)
 endif()
 
 # UI library
-add_library(ninjam-ui STATIC
+add_library(jamwide-ui STATIC
     src/ui/ui_main.cpp
     src/ui/ui_status.cpp
     src/ui/ui_connection.cpp
@@ -128,67 +128,62 @@ add_library(ninjam-ui STATIC
     src/ui/ui_meters.cpp
     src/ui/ui_util.cpp
 )
-target_include_directories(ninjam-ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(ninjam-ui PUBLIC imgui clap)
-if(NINJAM_CLAP_DEV_BUILD)
-    target_compile_definitions(ninjam-ui PRIVATE NINJAM_DEV_BUILD=1)
+target_include_directories(jamwide-ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(jamwide-ui PUBLIC imgui clap)
+if(JAMWIDE_DEV_BUILD)
+    target_compile_definitions(jamwide-ui PRIVATE JAMWIDE_DEV_BUILD=1)
 endif()
 
-# Main plugin
-add_library(ninjam-clap MODULE
+# Plugin implementation (static)
+add_library(jamwide-impl STATIC
     src/plugin/clap_entry.cpp
 )
-target_include_directories(ninjam-clap PRIVATE
+target_include_directories(jamwide-impl PRIVATE
     src
     src/third_party
 )
 
 # Platform-specific GUI sources
 if(APPLE)
-    target_sources(ninjam-clap PRIVATE src/platform/gui_macos.mm)
+    target_sources(jamwide-impl PRIVATE src/platform/gui_macos.mm)
 elseif(WIN32)
-    target_sources(ninjam-clap PRIVATE src/platform/gui_win32.cpp)
+    target_sources(jamwide-impl PRIVATE src/platform/gui_win32.cpp)
 endif()
 
-target_link_libraries(ninjam-clap PRIVATE
+target_link_libraries(jamwide-impl PUBLIC
     clap
     clap-helpers
     njclient
-    ninjam-threading
-    ninjam-ui
+    jamwide-threading
+    jamwide-ui
     imgui
 )
-
-if(WIN32)
-    target_link_libraries(ninjam-clap PRIVATE d3d11)
+if(JAMWIDE_DEV_BUILD)
+    target_compile_definitions(jamwide-impl PRIVATE JAMWIDE_DEV_BUILD=1)
 endif()
 
-# CLAP bundle setup
-set_target_properties(ninjam-clap PROPERTIES
-    PREFIX ""
-    OUTPUT_NAME "NINJAM"
+make_clapfirst_plugins(
+    TARGET_NAME jamwide
+    IMPL_TARGET jamwide-impl
+    OUTPUT_NAME "JamWide"
+    ENTRY_SOURCE "src/plugin/clap_entry_export.cpp"
+    BUNDLE_IDENTIFIER "com.jamwide.client"
+    BUNDLE_VERSION "1.0.0"
+    PLUGIN_FORMATS CLAP VST3 AUV2
+    AUV2_MANUFACTURER_NAME "JamWide"
+    AUV2_MANUFACTURER_CODE "JMWD"
+    AUV2_SUBTYPE_CODE "JWAU"
+    AUV2_INSTRUMENT_TYPE "aufx"
 )
 
 if(APPLE)
-    set_target_properties(ninjam-clap PROPERTIES
-        BUNDLE TRUE
-        BUNDLE_EXTENSION clap
-        MACOSX_BUNDLE TRUE
-        MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/resources/Info.plist.in
-    )
-    # Set bundle bit so Finder shows it as a single file
-    add_custom_command(TARGET ninjam-clap POST_BUILD
-        COMMAND SetFile -a B "$<TARGET_BUNDLE_DIR:ninjam-clap>"
-        COMMENT "Setting bundle bit on NINJAM.clap"
-    )
-elseif(WIN32)
-    set_target_properties(ninjam-clap PROPERTIES
-        SUFFIX ".clap"
+    add_custom_command(TARGET jamwide_clap POST_BUILD
+        COMMAND SetFile -a B "$<TARGET_BUNDLE_DIR:jamwide_clap>"
+        COMMENT "Setting bundle bit on JamWide.clap"
     )
 endif()
 
-# Install
-install(TARGETS ninjam-clap
+install(TARGETS jamwide_clap
     LIBRARY DESTINATION lib/clap
     BUNDLE DESTINATION lib/clap
 )

@@ -1,9 +1,12 @@
-# NINJAM CLAP Plugin
+# JamWide
 
-A modern [CLAP](https://clap.audio) audio plugin client for [NINJAM](https://www.cockos.com/ninjam/) — the open-source, internet-based real-time collaboration software for musicians.
+A modern audio plugin client for [NINJAM](https://www.cockos.com/ninjam/) — the open-source, internet-based real-time collaboration software for musicians.
+
+🌐 **Website:** [jamwide.audio](https://jamwide.audio)
 
 ![License](https://img.shields.io/badge/license-GPL--2.0-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey.svg)
+![Formats](https://img.shields.io/badge/formats-CLAP%20%7C%20VST3%20%7C%20AU-blue.svg)
 ![Status](https://img.shields.io/badge/status-in%20development-yellow.svg)
 
 ## What is NINJAM?
@@ -12,7 +15,7 @@ NINJAM (Novel Intervallic Network Jamming Architecture for Music) allows musicia
 
 ## About This Plugin
 
-This project ports the NINJAM client functionality into a cross-platform CLAP audio plugin, allowing you to:
+JamWide ports the NINJAM client functionality into a cross-platform CLAP audio plugin, allowing you to:
 
 - **Use NINJAM directly in your DAW** — Connect to jam sessions without leaving your production environment
 - **Route audio flexibly** — Use your DAW's mixer for monitoring and processing
@@ -43,11 +46,13 @@ This project ports the NINJAM client functionality into a cross-platform CLAP au
 
 ## Supported Hosts
 
-Any DAW that supports CLAP plugins, including:
-- [Bitwig Studio](https://www.bitwig.com/)
-- [REAPER](https://www.reaper.fm/)
-- [MultitrackStudio](https://www.multitrackstudio.com/)
-- [And many more...](https://github.com/free-audio/clap/wiki/Hosts)
+Works with any DAW that supports CLAP, VST3, or Audio Unit plugins:
+
+| Format | Hosts |
+|--------|-------|
+| **CLAP** | Bitwig Studio, REAPER, MultitrackStudio |
+| **VST3** | Ableton Live, Cubase, Logic Pro, FL Studio, REAPER |
+| **AU v2** | Logic Pro, GarageBand, MainStage (macOS only) |
 
 ## Building
 
@@ -71,17 +76,17 @@ Any DAW that supports CLAP plugins, including:
 
 ```bash
 # Clone the repository
-git clone --recursive https://github.com/mkschulze/ninjam-clap.git
-cd ninjam-clap
+git clone --recursive https://github.com/mkschulze/JamWide.git
+cd JamWide
 
 # Create build directory
 mkdir build && cd build
 
 # Configure (macOS) - Dev build with verbose logging
-cmake .. -DCMAKE_BUILD_TYPE=Release -DNINJAM_CLAP_DEV_BUILD=ON
+cmake .. -DCMAKE_BUILD_TYPE=Release -DJAMWIDE_DEV_BUILD=ON
 
 # Configure (macOS) - Production build with minimal logging  
-cmake .. -DCMAKE_BUILD_TYPE=Release -DNINJAM_CLAP_DEV_BUILD=OFF
+cmake .. -DCMAKE_BUILD_TYPE=Release -DJAMWIDE_DEV_BUILD=OFF
 
 # Configure (Windows with Visual Studio)
 cmake .. -G "Visual Studio 17 2022" -A x64
@@ -93,30 +98,46 @@ cmake --build . --config Release
 ### Quick Install (macOS)
 
 ```bash
-# Build and install to ~/Library/Audio/Plug-Ins/CLAP/
+# Build and install all formats to user plugin folders
 ./install.sh
+# Installs to:
+# - ~/Library/Audio/Plug-Ins/CLAP/JamWide.clap
+# - ~/Library/Audio/Plug-Ins/VST3/JamWide.vst3
+# - ~/Library/Audio/Plug-Ins/Components/JamWide.component
 ```
 
 ### Output
 
-- **macOS**: `build/NINJAM.clap` (bundle)
-- **Windows**: `build/Release/NINJAM.clap` (DLL)
+After building:
+- `build/JamWide.clap` — CLAP plugin
+- `build/JamWide.vst3` — VST3 plugin
+- `build/JamWide.component` — Audio Unit v2 (macOS only)
 
 ## Installation
 
-### macOS
-Copy `NINJAM.clap` to one of:
+### macOS (CLAP)
+Copy `JamWide.clap` to:
 - `~/Library/Audio/Plug-Ins/CLAP/` (user)
-- `/Library/Audio/Plug-Ins/CLAP/` (system-wide)
 
-### Windows
-Copy `NINJAM.clap` to one of:
+### macOS (VST3)
+Copy `JamWide.vst3` to:
+- `~/Library/Audio/Plug-Ins/VST3/` (user)
+
+### macOS (Audio Unit)
+Copy `JamWide.component` to:
+- `~/Library/Audio/Plug-Ins/Components/` (user)
+
+### Windows (CLAP)
+Copy `JamWide.clap` to:
 - `%LOCALAPPDATA%\Programs\Common\CLAP\` (user)
-- `C:\Program Files\Common Files\CLAP\` (system-wide)
+
+### Windows (VST3)
+Copy `JamWide.vst3` to:
+- `%LOCALAPPDATA%\Programs\Common\VST3\` (user)
 
 ## Usage
 
-1. Load the NINJAM plugin on a track in your DAW
+1. Load the JamWide plugin on a track in your DAW
 2. Open the plugin GUI
 3. Enter a server address (e.g., `ninbot.com:2049`) or select from the list
 4. Enter your username and optional password
@@ -136,7 +157,7 @@ Copy `NINJAM.clap` to one of:
 
 ## Project Status
 
-🚧 **In Active Development** (Build r44+)
+🚧 **In Active Development** (Build r96+)
 
 ### Completed
 - [x] Core NJClient port (audio engine, networking)
@@ -148,21 +169,24 @@ Copy `NINJAM.clap` to one of:
 - [x] Connection to public NINJAM servers (ninbot.com, ninjamer.com, etc.)
 - [x] License agreement dialog
 - [x] Dev/Production build system with configurable logging
+- [x] Chat room with message history and timestamps
+- [x] Visual timing guide for beat alignment feedback
+- [x] Anonymous login support (auto-prefix for public servers)
+- [x] Multi-format builds (CLAP, VST3, Audio Unit v2)
+- [x] Windows keyboard/focus handling fixes
 
 ### In Progress
 - [ ] Multi-instance support improvements
 - [ ] End-to-end audio testing with other musicians
-- [ ] Per-user mixing controls refinement
 
 ### Planned
-- [ ] Chat integration
 - [ ] Linux support (X11/Wayland + OpenGL)
 - [ ] Windows testing and polish
 
 ## Architecture
 
 ```
-ninjam-clap/
+JamWide/
 ├── src/
 │   ├── core/           # NJClient port (networking, audio decode/encode)
 │   ├── plugin/         # CLAP entry point and wrapper
@@ -196,6 +220,16 @@ Contributions are welcome! Please feel free to submit issues and pull requests.
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
+
+### UI ID Check
+
+To avoid Dear ImGui ID collisions, run the local checker:
+
+```bash
+python3 tools/check_imgui_ids.py
+```
+
+It flags unscoped widget labels that are not wrapped in `ImGui::PushID(...)`.
 5. Open a Pull Request
 
 ## License
