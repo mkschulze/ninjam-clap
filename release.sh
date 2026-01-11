@@ -2,6 +2,7 @@
 #
 # JamWide Release Script
 # Automatically generates commit summary, commits, builds, tags, and pushes to GitHub
+# When a tag is pushed, GitHub Actions will build for Windows and macOS and upload to releases
 #
 
 set -e  # Exit on error
@@ -14,6 +15,33 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
+
+# Parse arguments
+SKIP_LOCAL_BUILD=false
+CI_ONLY=false
+
+for arg in "$@"; do
+    case $arg in
+        --ci-only)
+            CI_ONLY=true
+            SKIP_LOCAL_BUILD=true
+            shift
+            ;;
+        --skip-local-build)
+            SKIP_LOCAL_BUILD=true
+            shift
+            ;;
+        --help)
+            echo "Usage: $0 [options]"
+            echo ""
+            echo "Options:"
+            echo "  --skip-local-build  Skip local build, only commit and tag"
+            echo "  --ci-only           Only push tag to trigger CI build (no local build)"
+            echo "  --help              Show this help"
+            exit 0
+            ;;
+    esac
+done
 
 # Get current build number
 BUILD_NUM=$(grep -o 'JAMWIDE_BUILD_NUMBER [0-9]*' src/build_number.h | awk '{print $2}')
@@ -128,8 +156,22 @@ fi
 
 # Build and install
 echo ""
-echo -e "${YELLOW}Building...${NC}"
-./install.sh
+if [[ "$SKIP_LOCAL_BUILD" == "true" ]]; then
+    echo -e "${YELLOW}Skipping local build (--skip-local-build or --ci-only)${NC}"
+    # Still increment build number for consistency
+    ./increment_build.sh 2>/dev/null || {
+        BUILD_FILE="src/build_number.h"
+        if [ -f "$BUILD_FILE" ]; then
+            CURRENT=$(grep JAMWIDE_BUILD_NUMBER "$BUILD_FILE" | grep -o '[0-9]*')
+            NEW=$((CURRENT + 1))
+            echo "#pragma once" > "$BUILD_FILE"
+            echo "#define JAMWIDE_BUILD_NUMBER $NEW" >> "$BUILD_FILE"
+        fi
+    }
+else
+    echo -e "${YELLOW}Building locally...${NC}"
+    ./install.sh
+fi
 
 # Get new build number after install
 NEW_BUILD_NUM=$(grep -o 'JAMWIDE_BUILD_NUMBER [0-9]*' src/build_number.h | awk '{print $2}')
@@ -170,4 +212,14 @@ fi
 echo ""
 echo -e "${GREEN}=== Release Complete ===${NC}"
 echo -e "Build: r${NEW_BUILD_NUM}"
-echo -e "Installed to: ~/Library/Audio/Plug-Ins/CLAP/JamWide.clap"
+if [[ "$SKIP_LOCAL_BUILD" != "true" ]]; then
+    echo -e "Installed to: ~/Library/Audio/Plug-Ins/CLAP/JamWide.clap"
+fi
+
+# Show CI status if tag was created
+if [[ -n "$TAG_NAME" ]] && git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+    echo ""
+    echo -e "${CYAN}GitHub Actions will now build for Windows and macOS.${NC}"
+    echo -e "View progress: https://github.com/mkschulze/JamWide/actions"
+    echo -e "Release will appear at: https://github.com/mkschulze/JamWide/releases/tag/${TAG_NAME}"
+fi
