@@ -70,33 +70,59 @@ void ui_render_server_browser(jamwide::JamWidePlugin* plugin) {
                           ImGuiTableFlags_RowBg |
                           ImGuiTableFlags_BordersInnerH |
                           ImGuiTableFlags_Resizable)) {
-        ImGui::TableSetupColumn("Name");
-        ImGui::TableSetupColumn("Address");
+        ImGui::TableSetupColumn("Server");
+        ImGui::TableSetupColumn("Tempo");
         ImGui::TableSetupColumn("Users");
-        ImGui::TableSetupColumn("Topic");
-        ImGui::TableSetupColumn("Action");
+        ImGui::TableSetupColumn("Who's There");
+        ImGui::TableSetupColumn("##Action", ImGuiTableColumnFlags_WidthFixed, 40.0f);
         ImGui::TableHeadersRow();
 
         int idx = 0;
         for (const auto& entry : state.server_list) {
             ImGui::TableNextRow();
 
+            // Server name/address
             ImGui::TableSetColumnIndex(0);
-            ImGui::TextUnformatted(entry.name.empty()
-                                       ? entry.host.c_str()
-                                       : entry.name.c_str());
-
-            ImGui::TableSetColumnIndex(1);
             char addr[256];
             format_server_address(entry, addr, sizeof(addr));
             ImGui::TextUnformatted(addr);
 
+            // Tempo (BPM/BPI or Lobby)
+            ImGui::TableSetColumnIndex(1);
+            if (entry.is_lobby) {
+                ImGui::TextDisabled("Lobby");
+            } else if (entry.bpm > 0) {
+                ImGui::Text("%d/%d", entry.bpm, entry.bpi);
+            } else {
+                ImGui::TextDisabled("-");
+            }
+
+            // Users (current/max)
             ImGui::TableSetColumnIndex(2);
-            ImGui::Text("%d", entry.users);
+            if (entry.max_users > 0) {
+                ImGui::Text("%d/%d", entry.users, entry.max_users);
+            } else {
+                ImGui::Text("%d", entry.users);
+            }
 
+            // Usernames - truncated with tooltip
             ImGui::TableSetColumnIndex(3);
-            ImGui::TextUnformatted(entry.topic.c_str());
+            if (!entry.user_list.empty()) {
+                // Truncate for display
+                std::string display = entry.user_list;
+                if (display.length() > 30) {
+                    display = display.substr(0, 27) + "...";
+                }
+                ImGui::TextUnformatted(display.c_str());
+                // Tooltip with full list
+                if (ImGui::IsItemHovered() && entry.user_list.length() > 30) {
+                    ImGui::SetTooltip("%s", entry.user_list.c_str());
+                }
+            } else {
+                ImGui::TextDisabled("(empty)");
+            }
 
+            // Use button
             ImGui::TableSetColumnIndex(4);
             ImGui::PushID(idx++);
             if (ImGui::SmallButton("Use")) {

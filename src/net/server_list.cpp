@@ -7,6 +7,8 @@
 #include "wdl/jsonparse.h"
 
 #include <cstdlib>
+#include <cstring>
+#include <vector>
 
 namespace jamwide {
 
@@ -89,8 +91,8 @@ void ServerListFetcher::request(const std::string& url) {
     if (url_.empty()) {
         return;
     }
-    http_.addheader("User-Agent: NINJAM-CLAP");
-    http_.addheader("Accept: application/json");
+    http_.addheader("User-Agent: JamWide");
+    http_.addheader("Accept: text/plain, application/json");
     http_.connect(url_.c_str());
     active_ = true;
 }
@@ -152,6 +154,117 @@ bool ServerListFetcher::poll(ServerListResult& result) {
 
 bool ServerListFetcher::parse_response(const std::string& data,
                                        ServerListResult& result) {
+    // Auto-detect format: plain text starts with "SERVER", JSON starts with '{' or '['
+    if (!data.empty()) {
+        size_t start = 0;
+        while (start < data.size() && (data[start] == ' ' || data[start] == '\n' || data[start] == '\r')) {
+            ++start;
+        }
+        if (start < data.size() && data.substr(start, 6) == "SERVER") {
+            return parse_ninjam_format(data, result);
+        }
+    }
+    return parse_json_format(data, result);
+}
+
+// Parse ninjam.com plain-text format:
+// SERVER "host:port" "BPM/BPI" "users/max:name1,name2,..."
+bool ServerListFetcher::parse_ninjam_format(const std::string& data,
+                                            ServerListResult& result) {
+    result.servers.clear();
+    result.error.clear();
+
+    // Helper to extract quoted string
+    auto extract_quoted = [](const char*& p) -> std::string {
+        while (*p && *p != '"') ++p;
+        if (*p != '"') return "";
+        ++p; // skip opening quote
+        const char* start = p;
+        while (*p && *p != '"') ++p;
+        std::string s(start, p);
+        if (*p == '"') ++p; // skip closing quote
+        return s;
+    };
+
+    const char* p = data.c_str();
+    while (*p) {
+        // Find start of line
+        while (*p && (*p == ' ' || *p == '\t')) ++p;
+
+        // Check for SERVER keyword
+        if (std::strncmp(p, "SERVER", 6) == 0) {
+            p += 6;
+
+            // Extract 3 quoted strings
+            std::string host_port = extract_quoted(p);
+            std::string tempo = extract_quoted(p);
+            std::string users_info = extract_quoted(p);
+
+            if (!host_port.empty()) {
+                ServerListEntry entry;
+
+                // Parse host:port
+                size_t colon = host_port.rfind(':');
+                if (colon != std::string::npos) {
+                    entry.host = host_port.substr(0, colon);
+                    entry.port = parse_int(host_port.c_str() + colon + 1, 2049);
+                } else {
+                    entry.host = host_port;
+                    entry.port = 2049;
+                }
+                entry.name = entry.host;
+
+                // Parse tempo: "BPM/BPI" or "lobby"
+                if (tempo == "lobby" || tempo == "Lobby") {
+                    entry.is_lobby = true;
+                    entry.bpm = 0;
+                    entry.bpi = 0;
+                } else {
+                    size_t slash = tempo.find('/');
+                    if (slash != std::string::npos) {
+                        // Format could be "110 BPM/16" or "110/16"
+                        std::string bpm_part = tempo.substr(0, slash);
+                        // Remove " BPM" suffix if present
+                        size_t bpm_pos = bpm_part.find(" BPM");
+                        if (bpm_pos != std::string::npos) {
+                            bpm_part = bpm_part.substr(0, bpm_pos);
+                        }
+                        entry.bpm = parse_int(bpm_part.c_str(), 0);
+                        entry.bpi = parse_int(tempo.c_str() + slash + 1, 0);
+                    }
+                }
+
+                // Parse users: "current/max:name1,name2,..."
+                size_t user_colon = users_info.find(':');
+                if (user_colon != std::string::npos) {
+                    std::string counts = users_info.substr(0, user_colon);
+                    entry.user_list = users_info.substr(user_colon + 1);
+
+                    // Remove "(empty)" placeholder
+                    if (entry.user_list == "(empty)") {
+                        entry.user_list.clear();
+                    }
+
+                    size_t slash = counts.find('/');
+                    if (slash != std::string::npos) {
+                        entry.users = parse_int(counts.c_str(), 0);
+                        entry.max_users = parse_int(counts.c_str() + slash + 1, 0);
+                    }
+                }
+
+                result.servers.push_back(std::move(entry));
+            }
+        }
+        // Skip to next line
+        while (*p && *p != '\n') ++p;
+        if (*p == '\n') ++p;
+    }
+
+    return true;
+}
+
+bool ServerListFetcher::parse_json_format(const std::string& data,
+                                          ServerListResult& result) {
     wdl_json_parser parser;
     wdl_json_element* root = parser.parse(data.c_str(),
                                           static_cast<int>(data.size()));

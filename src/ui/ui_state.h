@@ -98,7 +98,7 @@ struct UiState {
     std::string license_text;
 
     // Public server list
-    char server_list_url[256] = "http://ninbot.com/serverlist";
+    char server_list_url[256] = "http://autosong.ninjam.com/serverlist.php";
     std::vector<ServerListEntry> server_list;
     bool server_list_loading = false;
     std::string server_list_error;

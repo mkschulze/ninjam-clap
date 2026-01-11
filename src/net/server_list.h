@@ -29,6 +29,8 @@ public:
 private:
     void reset_state();
     bool parse_response(const std::string& data, ServerListResult& result);
+    bool parse_ninjam_format(const std::string& data, ServerListResult& result);
+    bool parse_json_format(const std::string& data, ServerListResult& result);
 
     JNL_HTTPGet http_;
     bool active_ = false;
