@@ -96,8 +96,9 @@ struct JamWidePlugin {
     UiAtomicSnapshot ui_snapshot;
     bool gui_created{false};
     bool gui_visible{false};
-    uint32_t gui_width{600};
-    uint32_t gui_height{400};
+    // Default size - set large since Logic/GarageBand don't support AU resize
+    uint32_t gui_width{800};
+    uint32_t gui_height{1200};
     
     // =========== Parameters ===========
     

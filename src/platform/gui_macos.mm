@@ -100,6 +100,17 @@ using namespace jamwide;
 #endif
 }
 
+- (void)setFrameSize:(NSSize)newSize {
+    [super setFrameSize:newSize];
+    
+    // Update ImGui display size when view is resized
+    if (_imguiContext) {
+        ImGui::SetCurrentContext(_imguiContext);
+        ImGuiIO& io = ImGui::GetIO();
+        io.DisplaySize = ImVec2(newSize.width, newSize.height);
+    }
+}
+
 - (void)setupStyle {
     ImGuiStyle& style = ImGui::GetStyle();
     style.WindowRounding = 4.0f;
