@@ -7,7 +7,7 @@ A modern audio plugin client for [NINJAM](https://www.cockos.com/ninjam/) — th
 ![License](https://img.shields.io/badge/license-GPL--2.0-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey.svg)
 ![Formats](https://img.shields.io/badge/formats-CLAP%20%7C%20VST3%20%7C%20AU-blue.svg)
-![Status](https://img.shields.io/badge/status-stable-green.svg)
+![Status](https://img.shields.io/badge/status-beta-yellow.svg)
 
 ## What is NINJAM?
 
@@ -160,7 +160,7 @@ Copy `JamWide.vst3` to:
 
 ## Project Status
 
-✅ **Stable Release** (v1.0)
+⚠️ **Beta Release** — macOS tested, Windows testing in progress
 
 ### Features
 - [x] Core NJClient port (audio engine, networking)
