@@ -2,8 +2,11 @@ cmake_minimum_required(VERSION 3.20)
 project(jamwide VERSION 1.0.0 LANGUAGES C CXX)
 
 # Windows: Prevent min/max macros from conflicting with std::min/std::max
+# and use dynamic MSVC runtime for compatibility with clap-wrapper
 if(WIN32)
     add_compile_definitions(NOMINMAX WIN32_LEAN_AND_MEAN)
+    # Use dynamic runtime library (MD/MDd) to match clap-wrapper
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 endif()
 
 if(APPLE)
@@ -91,7 +94,9 @@ add_library(wdl STATIC
 )
 target_include_directories(wdl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/wdl)
 if(WIN32)
-    target_link_libraries(wdl PUBLIC ws2_32)
+    # Add UTF8 wrapper functions for Windows
+    target_sources(wdl PRIVATE wdl/win32_utf8.c)
+    target_link_libraries(wdl PUBLIC ws2_32 comdlg32 shell32)
 endif()
 
 # NJClient core (static)
