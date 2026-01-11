@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.20)
 project(jamwide VERSION 1.0.0 LANGUAGES C CXX)
 
+# Windows: Prevent min/max macros from conflicting with std::min/std::max
+if(WIN32)
+    add_compile_definitions(NOMINMAX WIN32_LEAN_AND_MEAN)
+endif()
+
 if(APPLE)
     enable_language(OBJC)
     enable_language(OBJCXX)
