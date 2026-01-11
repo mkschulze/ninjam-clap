@@ -186,7 +186,10 @@ void ui_render_frame(JamWidePlugin* plugin) {
 
     // === License Dialog (modal) ===
     if (plugin->ui_state.show_license_dialog) {
-        ImGui::OpenPopup("Server License");
+        // Only open popup once when dialog first appears
+        if (!ImGui::IsPopupOpen("Server License")) {
+            ImGui::OpenPopup("Server License");
+        }
 
         ImVec2 center = ImGui::GetMainViewport()->GetCenter();
         ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
@@ -198,7 +201,10 @@ void ui_render_frame(JamWidePlugin* plugin) {
 
             ImGui::Separator();
 
-            if (ImGui::Button("Accept", ImVec2(120, 0))) {
+            // Make buttons larger and more clickable
+            ImVec2 button_size(150, 30);
+            
+            if (ImGui::Button("Accept", button_size)) {
                 NLOG("[UI] License accepted\n");
                 plugin->license_response.store(1, std::memory_order_release);
                 plugin->license_cv.notify_one();
@@ -208,7 +214,7 @@ void ui_render_frame(JamWidePlugin* plugin) {
 
             ImGui::SameLine();
 
-            if (ImGui::Button("Reject", ImVec2(120, 0))) {
+            if (ImGui::Button("Reject", button_size)) {
                 NLOG("[UI] License rejected\n");
                 plugin->license_response.store(-1, std::memory_order_release);
                 plugin->license_cv.notify_one();
