@@ -37,12 +37,103 @@ public:
         , render_target_view_(nullptr)
         , timer_id_(0)
         , imgui_ctx_(nullptr)
+        , dummy_edit_(nullptr)
+        , orig_edit_proc_(nullptr)
+        , wants_text_input_(false)
+        , message_hook_(nullptr)
+        , message_hook_thread_(0)
     {
         plugin_ = std::move(plugin);
     }
 
     ~GuiContextWin32() override {
         cleanup();
+    }
+
+    // Thread-local active context for message hook
+    static thread_local GuiContextWin32* active_ctx_;
+
+    // Thread message hook to suppress host accelerators while typing
+    static LRESULT CALLBACK message_hook_proc(int code, WPARAM wParam, LPARAM lParam) {
+        if (code < 0) {
+            return CallNextHookEx(nullptr, code, wParam, lParam);
+        }
+
+        MSG* msg = reinterpret_cast<MSG*>(lParam);
+        GuiContextWin32* ctx = active_ctx_;
+        if (!msg || !ctx || !ctx->wants_text_input_ || !ctx->dummy_edit_) {
+            return CallNextHookEx(nullptr, code, wParam, lParam);
+        }
+
+        const bool is_key_msg =
+            msg->message == WM_KEYDOWN || msg->message == WM_KEYUP ||
+            msg->message == WM_SYSKEYDOWN || msg->message == WM_SYSKEYUP ||
+            msg->message == WM_CHAR || msg->message == WM_SYSCHAR;
+
+        if (is_key_msg) {
+            MSG copy = *msg;
+            copy.hwnd = ctx->dummy_edit_;
+            // Route through the normal translation path so WM_CHAR is generated.
+            TranslateMessage(&copy);
+            DispatchMessageW(&copy);
+            msg->message = WM_NULL;
+            msg->wParam = 0;
+            msg->lParam = 0;
+        }
+
+        return CallNextHookEx(nullptr, code, wParam, lParam);
+    }
+
+    // Subclass procedure for dummy EDIT control - forwards keyboard input to ImGui
+    static LRESULT CALLBACK dummy_edit_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+        auto* ctx = reinterpret_cast<GuiContextWin32*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+        if (!ctx) {
+            return DefWindowProc(hwnd, msg, wParam, lParam);
+        }
+
+        // Set ImGui context before forwarding
+        if (ctx->imgui_ctx_) {
+            ImGui::SetCurrentContext(ctx->imgui_ctx_);
+        }
+
+        const bool is_key_msg =
+            msg == WM_KEYDOWN || msg == WM_KEYUP || msg == WM_CHAR ||
+            msg == WM_SYSKEYDOWN || msg == WM_SYSKEYUP || msg == WM_SYSCHAR;
+        const bool is_ime_msg =
+            msg == WM_IME_COMPOSITION || msg == WM_IME_CHAR ||
+            msg == WM_IME_STARTCOMPOSITION || msg == WM_IME_ENDCOMPOSITION ||
+            msg == WM_INPUTLANGCHANGE;
+        const bool is_focus_msg = msg == WM_SETFOCUS || msg == WM_KILLFOCUS;
+
+        // Forward keyboard, IME, and focus messages to ImGui
+        if (is_key_msg || is_ime_msg || is_focus_msg) {
+            
+            // Handle Tab to keep focus in EDIT when text input is active
+            if (msg == WM_KEYDOWN && wParam == VK_TAB) {
+                // Let ImGui handle tab navigation
+                if (ctx->hwnd_) {
+                    ImGui_ImplWin32_WndProcHandler(ctx->hwnd_, msg, wParam, lParam);
+                }
+                return 0;
+            }
+            
+            HWND target_hwnd = nullptr;
+            if (is_ime_msg) {
+                target_hwnd = hwnd; // IME is tied to the focused edit control
+            } else {
+                target_hwnd = ctx->hwnd_;
+            }
+            if (target_hwnd) {
+                ImGui_ImplWin32_WndProcHandler(target_hwnd, msg, wParam, lParam);
+                return 0;  // Consume message
+            }
+        }
+
+        // Call original EDIT proc for other messages
+        if (ctx->orig_edit_proc_) {
+            return CallWindowProc(ctx->orig_edit_proc_, hwnd, msg, wParam, lParam);
+        }
+        return DefWindowProc(hwnd, msg, wParam, lParam);
     }
 
     bool set_parent(void* parent_handle) override {
@@ -95,6 +186,32 @@ public:
         ImGui_ImplWin32_Init(hwnd_);
         ImGui_ImplDX11_Init(device_, device_context_);
 
+        // Create dummy EDIT control for keyboard focus signaling
+        dummy_edit_ = CreateWindowExW(
+            0,
+            L"EDIT",
+            L"",
+            WS_CHILD | WS_TABSTOP | WS_VISIBLE,
+            -10, -10, 1, 1,  // Offscreen position, 1x1 size
+            hwnd_,
+            nullptr,
+            GetModuleHandle(nullptr),
+            nullptr
+        );
+
+        if (dummy_edit_) {
+            // Store this pointer for subclass access
+            SetWindowLongPtr(dummy_edit_, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+            
+            // Subclass the EDIT control to forward messages
+            orig_edit_proc_ = reinterpret_cast<WNDPROC>(
+                SetWindowLongPtr(dummy_edit_, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(dummy_edit_proc))
+            );
+        }
+
+        // Install message hook on GUI thread
+        install_message_hook();
+
         // Start render timer (60 FPS)
         timer_id_ = SetTimer(hwnd_, 1, 16, nullptr);
 
@@ -126,16 +243,37 @@ public:
         if (hwnd_) {
             ShowWindow(hwnd_, SW_SHOW);
         }
+        install_message_hook();
+        if (hwnd_ && timer_id_ == 0) {
+            timer_id_ = SetTimer(hwnd_, 1, 16, nullptr);
+        }
     }
 
     void hide() override {
         if (hwnd_) {
             ShowWindow(hwnd_, SW_HIDE);
         }
+        if (hwnd_ && timer_id_ != 0) {
+            KillTimer(hwnd_, timer_id_);
+            timer_id_ = 0;
+        }
+        remove_message_hook();
+        
+        // Restore focus to main window if dummy edit has it
+        if (dummy_edit_ && GetFocus() == dummy_edit_) {
+            SetFocus(hwnd_);
+        }
+        if (active_ctx_ == this) {
+            active_ctx_ = nullptr;
+        }
+        wants_text_input_ = false;
     }
 
     void render() override {
         if (!hwnd_ || !device_) return;
+        
+        // Safety: don't render if hidden (timer should be paused, but guard anyway)
+        if (!IsWindowVisible(hwnd_)) return;
 
         if (imgui_ctx_) {
             ImGui::SetCurrentContext(imgui_ctx_);
@@ -153,6 +291,30 @@ public:
 
         // Render UI
         ui_render_frame(plugin.get());
+
+        // Transition-based focus management
+        ImGuiIO& io = ImGui::GetIO();
+        bool wants_text = io.WantTextInput;
+        
+        if (wants_text != wants_text_input_) {
+            wants_text_input_ = wants_text;
+            
+            if (wants_text && dummy_edit_) {
+                // Text input active - move focus to dummy EDIT
+                if (GetFocus() != dummy_edit_) {
+                    SetFocus(dummy_edit_);
+                }
+                active_ctx_ = this;
+            } else if (!wants_text && hwnd_) {
+                // Text input inactive - restore focus to main window
+                if (GetFocus() == dummy_edit_) {
+                    SetFocus(hwnd_);
+                }
+                if (active_ctx_ == this) {
+                    active_ctx_ = nullptr;
+                }
+            }
+        }
 
         // Render ImGui
         ImGui::Render();
@@ -177,6 +339,27 @@ private:
     ID3D11RenderTargetView* render_target_view_;
     UINT_PTR timer_id_;
     ImGuiContext* imgui_ctx_;
+    HWND dummy_edit_;            // Dummy EDIT control for keyboard focus
+    WNDPROC orig_edit_proc_;     // Original EDIT window procedure
+    bool wants_text_input_;      // Tracks io.WantTextInput for focus transitions
+    HHOOK message_hook_;         // GUI thread message hook
+    DWORD message_hook_thread_;  // Thread id for hook installation
+
+    void install_message_hook() {
+        if (message_hook_ || !hwnd_) {
+            return;
+        }
+        message_hook_thread_ = GetCurrentThreadId();
+        message_hook_ = SetWindowsHookExW(WH_GETMESSAGE, message_hook_proc, nullptr, message_hook_thread_);
+    }
+
+    void remove_message_hook() {
+        if (message_hook_) {
+            UnhookWindowsHookEx(message_hook_);
+            message_hook_ = nullptr;
+        }
+        message_hook_thread_ = 0;
+    }
 
     bool create_device() {
         DXGI_SWAP_CHAIN_DESC sd = {};
@@ -231,6 +414,22 @@ private:
     }
 
     void cleanup() {
+        // Restore focus if dummy edit has it
+        if (dummy_edit_ && GetFocus() == dummy_edit_ && hwnd_) {
+            SetFocus(hwnd_);
+        }
+        if (active_ctx_ == this) {
+            active_ctx_ = nullptr;
+        }
+        remove_message_hook();
+        
+        // Destroy dummy EDIT control
+        if (dummy_edit_) {
+            DestroyWindow(dummy_edit_);
+            dummy_edit_ = nullptr;
+            orig_edit_proc_ = nullptr;
+        }
+        
         if (timer_id_) {
             KillTimer(hwnd_, timer_id_);
             timer_id_ = 0;
@@ -298,18 +497,9 @@ private:
             ImGui::SetCurrentContext(ctx->imgui_ctx_);
         }
 
-        // Forward to ImGui first
+        // Forward to ImGui
         if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam))
-            return 1;
-
-        // If ImGui is capturing keyboard (text input field has focus),
-        // don't let the message propagate to the host
-        if (ctx && ctx->imgui_ctx_) {
-            ImGuiIO& io = ImGui::GetIO();
-            if (io.WantCaptureKeyboard && (msg == WM_KEYDOWN || msg == WM_KEYUP || msg == WM_CHAR || msg == WM_SYSKEYDOWN || msg == WM_SYSKEYUP)) {
-                return 0;  // Consume the message
-            }
-        }
+            return TRUE;
 
         if (ctx) {
             return ctx->wnd_proc(hwnd, msg, wParam, lParam);
@@ -352,6 +542,8 @@ private:
         return DefWindowProc(hwnd, msg, wParam, lParam);
     }
 };
+
+thread_local GuiContextWin32* GuiContextWin32::active_ctx_ = nullptr;
 
 GuiContext* create_gui_context_win32(std::shared_ptr<JamWidePlugin> plugin) {
     return new GuiContextWin32(std::move(plugin));

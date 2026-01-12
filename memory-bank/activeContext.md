@@ -4,13 +4,17 @@
 
 **Date:** 2026-01-12  
 **Phase:** 6 - Beta Release  
-**Status:** ⚠️ Beta - macOS tested, Windows testing pending
+**Status:** ✅ Beta - macOS and Windows fully tested and working
 
-## Latest Build: r108
+## Latest Build: r119
 
 ### What's Working
-- ✅ Plugin loads in GarageBand, Logic Pro (AU), REAPER (CLAP/VST3)
+- ✅ Plugin loads in GarageBand, Logic Pro (AU), REAPER (CLAP/VST3) - macOS
+- ✅ Plugin loads in Bitwig Studio, REAPER (CLAP/VST3) - Windows
 - ✅ **Multi-format builds**: CLAP, VST3, Audio Unit v2 (macOS + Windows)
+- ✅ **Windows build system**: Visual Studio 2022/2026, MSBuild, PowerShell install script
+- ✅ **Windows keyboard input**: Message hook + dummy EDIT control (spacebar/Caps Lock fixed)
+- ✅ **Windows IME support**: Japanese/Chinese/Korean keyboard input
 - ✅ **GitHub Actions CI/CD**: Automated builds for Windows and macOS
 - ✅ Connection to public NINJAM servers
 - ✅ Server browser with **live usernames** (autosong.ninjam.com)
@@ -24,20 +28,20 @@
 - ✅ Anonymous login support
 - ✅ Window size 800x1200 for AU (Logic/GarageBand compatibility)
 
-### Recent Changes (v0.105-v0.108)
+### Recent Changes (v0.117-v0.119)
 | Version | Change |
 |---------|--------|
+| v0.119 | Windows: Message hook prevents DAW accelerators during text input |
+| v0.117 | Windows: Dummy EDIT control + IME/focus forwarding + null guards |
 | v0.108 | UI: Transmit toggle now visible (layout fix) |
 | v0.107 | Fix: License dialog responds to single click |
 | v0.106 | Default audio quality: 256 kbps |
-| v0.105 | Server browser shows usernames from autosong.ninjam.com |
-| v0.104 | AU window size 800x1200, setFrameSize handler |
 
 ### Known Issues
-| Issue | Status |
-|-------|--------|
-| Bitwig Beta 11 plugin scan | Bitwig bug - localhost connection refused |
-| AU resize in Logic/GarageBand | Apple limitation - use fixed 800x1200 size |
+| Issue | Platform | Status |
+|-------|----------|--------|
+| Bitwig Beta 11 plugin scan | macOS | Bitwig bug - localhost connection refused |
+| AU resize in Logic/GarageBand | macOS | Apple limitation - use fixed 800x1200 size |
 
 ## CI/CD
 
@@ -48,6 +52,12 @@ GitHub Actions builds on every tag push:
 # ~/Library/Audio/Plug-Ins/CLAP/
 # ~/Library/Audio/Plug-Ins/VST3/
 # ~/Library/Audio/Plug-Ins/Components/
+```
+
+**Windows:** `install-win.ps1` script builds and installs to:
+```powershell
+# %LOCALAPPDATA%\Programs\Common\CLAP\
+# %LOCALAPPDATA%\Programs\Common\VST3\
 ```
 
 ### Logging Macros

@@ -246,7 +246,7 @@ static void plugin_reset(const clap_plugin_t* clap_plugin) {
 }
 
 static void plugin_on_main_thread(const clap_plugin_t* clap_plugin) {
-    // Called when host requests main thread callback
+    // Currently unused - reserved for future main thread operations
 }
 
 //------------------------------------------------------------------------------
@@ -903,7 +903,7 @@ static void gui_destroy(const clap_plugin_t* clap_plugin) {
     if (!plugin) return;
 
     if (plugin->gui_context) {
-        delete plugin->gui_context;
+        delete plugin->gui_context;  // Cleanup handles focus restoration
         plugin->gui_context = nullptr;
     }
 
@@ -1015,6 +1015,8 @@ static bool gui_hide(const clap_plugin_t* clap_plugin) {
 
     plugin->gui_context->hide();
     plugin->gui_visible = false;
+    
+    // Focus state cleared in GuiContext::hide() which triggers callback
     return true;
 }
 

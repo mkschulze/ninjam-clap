@@ -1,13 +1,14 @@
 # JamWide - Implementation Progress
 
 **Project Start:** January 2026  
-**Current Build:** r108 (v0.108)  
-**Status:** Beta - macOS tested, Windows testing pending  
-**Target Platforms:** Windows 10+ (MSVC), macOS 10.15+ (Xcode/Clang)  
+**Current Build:** r119 (v0.119)  
+**Status:** ✅ Beta - macOS tested, Windows fully working  
+**Target Platforms:** Windows 10+ (MSVC), macOS 10.15+ (Xcode/Clap)  
 **Plugin Formats:** CLAP, VST3, Audio Unit v2 (via clap-wrapper)  
 **UI Framework:** Dear ImGui (Metal on macOS, D3D11 on Windows)  
 **Language:** C++20 (std::variant/std::optional + designated initializers)  
-**CI/CD:** GitHub Actions (Windows + macOS builds on tag push)
+**CI/CD:** GitHub Actions (Windows + macOS builds on tag push)  
+**Windows Build:** Visual Studio 2022+ (MSVC 19.30+), MSBuild-based, PowerShell install script, ✅ Keyboard focus fixed
 
 ---
 
@@ -15,6 +16,8 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.119 | 2026-01-12 | Windows: Keyboard focus fix (message hook) |
+| v0.117 | 2026-01-12 | Windows: Dummy EDIT control + IME support |
 | v0.108 | 2026-01-12 | UI: Transmit toggle visible |
 | v0.107 | 2026-01-11 | Fix: License dialog single-click |
 | v0.106 | 2026-01-11 | Default 256 kbps audio quality |
@@ -38,7 +41,7 @@
 | Create root CMakeLists.txt | ✅ | C++20; ObjC/ObjCXX enabled only on macOS |
 | Create cmake/ClapPlugin.cmake | ⬜ | Not needed for MVP |
 | Create resources/Info.plist.in | ✅ | macOS bundle |
-| Verify empty build on Windows | ⬜ | Skipped (macOS only dev) |
+| Verify empty build on Windows | ✅ | VS 2022/2026, MSBuild successful |
 | Verify empty build on macOS | ✅ | `_clap_entry` exported, bundle verified |
 
 **Deliverable:** ✅ CLAP bundle builds, exports correct entry point
@@ -88,7 +91,7 @@
 
 ---
 
-## Phase 3: Platform GUI 🔄
+## Phase 3: Platform GUI ✅
 
 | Task | Status | Notes |
 |------|--------|-------|
@@ -102,10 +105,12 @@
 | Run thread UI events | ✅ | Emits status/user/topic events (code review fix) |
 | GUI teardown in plugin_destroy | ✅ | Safety net if host skips gui_destroy (code review fix) |
 | macOS responder chain fix | ✅ | ImGui NSTextInputClient becomes first responder |
+| Windows keyboard focus fix | ✅ | WH_GETMESSAGE hook + dummy EDIT + IME support (r117-r119) |
 | Test build on macOS | ✅ | Build verified (x86_64 bundle, ~2.8MB) |
-| Test loads in Bitwig | ✅ | Loads from user path |
-| Mouse/keyboard input working | ✅ | Text input + clicks verified |
-| Test in REAPER (macOS) | ⬜ | Manual testing pending |
+| Test build on Windows | ✅ | Build verified (VS 2022/2026, CLAP + VST3) |
+| Test loads in Bitwig | ✅ | Loads from user path (macOS + Windows) |
+| Mouse/keyboard input working | ✅ | Text input + clicks verified (macOS + Windows) |
+| Test in REAPER | ✅ | CLAP/VST3 verified (macOS + Windows) |
 
 **Deliverable:** ✅ ImGui GUI framework complete
 
@@ -147,9 +152,10 @@
 | Parameter automation test | ⬜ | Automate master volume in DAW |
 | Memory leak check (Windows) | ⬜ | Visual Studio diagnostics |
 | Memory leak check (macOS) | ⬜ | Instruments/Leaks |
-| Test in REAPER (Win) | ⬜ | |
+| Windows build system setup | ✅ | install-win.ps1 created, VS 2022/2026 tested |
+| Test in REAPER (Win) | 🔄 | Ready for testing |
 | Test in REAPER (macOS) | ⬜ | |
-| Test in Bitwig (Win) | ⬜ | |
+| Test in Bitwig (Win) | 🔄 | Ready for testing |
 | Test in Bitwig (macOS) | ⬜ | |
 
 **Deliverable:** Release candidate

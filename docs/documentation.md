@@ -107,44 +107,70 @@ cd JamWide
 ### Build (macOS)
 
 ```bash
-# Create build directory
-mkdir build && cd build
-
 # Configure - Development build (verbose logging)
-cmake .. -DCMAKE_BUILD_TYPE=Release -DJAMWIDE_DEV_BUILD=ON
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DJAMWIDE_DEV_BUILD=ON
 
 # Or Production build (minimal logging)
-cmake .. -DCMAKE_BUILD_TYPE=Release -DJAMWIDE_DEV_BUILD=OFF
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DJAMWIDE_DEV_BUILD=OFF
 
 # Build
-cmake --build . --config Release
+cmake --build build --config Release
 ```
 
 ### Build (Windows)
 
-```bash
-mkdir build && cd build
-cmake .. -G "Visual Studio 17 2022" -A x64
-cmake --build . --config Release
+**Requirements:**
+- Visual Studio 2022 (or newer) with C++ Desktop Development workload
+- CMake 3.20+ (included with Visual Studio)
+- Git for Windows
+
+```powershell
+# Configure with automatic dependency downloads
+cmake -B build -G "Visual Studio 17 2022" -A x64 -DCLAP_WRAPPER_DOWNLOAD_DEPENDENCIES=TRUE
+
+# Build with MSBuild (recommended)
+$MSBUILD = "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe"
+& $MSBUILD build\jamwide.sln /p:Configuration=Release /v:minimal
+
+# Or build with CMake (alternative)
+cmake --build build --config Release
 ```
 
-### Quick Install (macOS)
+**Note:** The first configuration downloads VST3 SDK and other dependencies automatically. For Visual Studio 2026 or other versions, adjust the generator name (e.g., `"Visual Studio 18"`).
+
+### Quick Install
+
+#### macOS
 
 ```bash
 ./install.sh
 ```
 
-This builds and installs all formats to:
+Installs to:
 - `~/Library/Audio/Plug-Ins/CLAP/JamWide.clap`
 - `~/Library/Audio/Plug-Ins/VST3/JamWide.vst3`
 - `~/Library/Audio/Plug-Ins/Components/JamWide.component`
 
+#### Windows
+
+```powershell
+.\install-win.ps1
+```
+
+Installs to:
+- `%LOCALAPPDATA%\Programs\Common\CLAP\JamWide.clap`
+- `%LOCALAPPDATA%\Programs\Common\VST3\JamWide.vst3`
+
 ### Build Output
 
-After building:
+#### macOS
 - `build/JamWide.clap` — CLAP plugin
 - `build/JamWide.vst3` — VST3 plugin  
-- `build/JamWide.component` — Audio Unit v2 (macOS only)
+- `build/JamWide.component` — Audio Unit v2
+
+#### Windows
+- `build/CLAP/Release/JamWide.clap` — CLAP plugin
+- `build/Release/JamWide.vst3` — VST3 plugin
 
 ---
 

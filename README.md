@@ -7,6 +7,7 @@ A modern audio plugin client for [NINJAM](https://www.cockos.com/ninjam/) — th
 ![License](https://img.shields.io/badge/license-GPL--2.0-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey.svg)
 ![Formats](https://img.shields.io/badge/formats-CLAP%20%7C%20VST3%20%7C%20AU-blue.svg)
+![Version](https://img.shields.io/badge/version-v0.119-blue.svg)
 ![Status](https://img.shields.io/badge/status-beta-yellow.svg)
 
 ## What is NINJAM?
@@ -82,26 +83,51 @@ Works with any DAW that supports CLAP, VST3, or Audio Unit plugins:
 git clone --recursive https://github.com/mkschulze/JamWide.git
 cd JamWide
 
-# Create build directory
-mkdir build && cd build
-
-# Configure (macOS) - Dev build with verbose logging
-cmake .. -DCMAKE_BUILD_TYPE=Release -DJAMWIDE_DEV_BUILD=ON
-
-# Configure (macOS) - Production build with minimal logging  
-cmake .. -DCMAKE_BUILD_TYPE=Release -DJAMWIDE_DEV_BUILD=OFF
-
-# Configure (Windows with Visual Studio)
-cmake .. -G "Visual Studio 17 2022" -A x64
-
-# Build
-cmake --build . --config Release
+# Initialize submodules if not cloned with --recursive
+git submodule update --init --recursive
 ```
 
-### Quick Install (macOS)
+#### macOS
 
 ```bash
-# Build and install all formats to user plugin folders
+# Configure - Dev build with verbose logging
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DJAMWIDE_DEV_BUILD=ON
+
+# Configure - Production build with minimal logging  
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DJAMWIDE_DEV_BUILD=OFF
+
+# Build
+cmake --build build --config Release
+
+# Quick install (builds and installs to user plugin folders)
+./install.sh
+```
+
+#### Windows
+
+**Requirements:**
+- Visual Studio 2022 (or newer) with C++ Desktop Development workload
+- CMake 3.20+ (included with Visual Studio)
+- Git for Windows
+
+```powershell
+# Configure with Visual Studio 2022 (or Visual Studio 18 for VS 2026)
+cmake -B build -G "Visual Studio 17 2022" -A x64 -DCLAP_WRAPPER_DOWNLOAD_DEPENDENCIES=TRUE
+
+# Build with MSBuild
+$MSBUILD = "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe"
+& $MSBUILD build\jamwide.sln /p:Configuration=Release /v:minimal
+
+# Quick install (builds and installs to user plugin folders)
+.\install-win.ps1
+```
+
+**Note:** The `-DCLAP_WRAPPER_DOWNLOAD_DEPENDENCIES=TRUE` flag automatically downloads VST3 SDK and other dependencies.
+
+### Quick Install
+
+#### macOS
+```bash
 ./install.sh
 # Installs to:
 # - ~/Library/Audio/Plug-Ins/CLAP/JamWide.clap
@@ -109,12 +135,24 @@ cmake --build . --config Release
 # - ~/Library/Audio/Plug-Ins/Components/JamWide.component
 ```
 
-### Output
+#### Windows
+```powershell
+.\install-win.ps1
+# Installs to:
+# - %LOCALAPPDATA%\Programs\Common\CLAP\JamWide.clap
+# - %LOCALAPPDATA%\Programs\Common\VST3\JamWide.vst3
+```
 
-After building:
+### Build Output
+
+#### macOS
 - `build/JamWide.clap` — CLAP plugin
 - `build/JamWide.vst3` — VST3 plugin
-- `build/JamWide.component` — Audio Unit v2 (macOS only)
+- `build/JamWide.component` — Audio Unit v2
+
+#### Windows
+- `build/CLAP/Release/JamWide.clap` — CLAP plugin
+- `build/Release/JamWide.vst3` — VST3 plugin
 
 ## Installation
 
@@ -160,7 +198,7 @@ Copy `JamWide.vst3` to:
 
 ## Project Status
 
-⚠️ **Beta Release** — macOS tested, Windows testing in progress
+⚠️ **Beta Release** — macOS tested, Windows builds successfully (testing in progress)
 
 ### Features
 - [x] Core NJClient port (audio engine, networking)
