@@ -58,14 +58,19 @@ Works with any DAW that supports CLAP, VST3, or Audio Unit plugins:
 | **VST3** | Ableton Live, Cubase, FL Studio, REAPER, Studio One |
 | **AU v2** | Logic Pro, GarageBand, MainStage (macOS only) |
 
+### System Requirements
+
+- **Windows**: Windows 10 or later (64-bit)
+- **macOS**: macOS 10.15 (Catalina) or later
+
 ## Building
 
 ### Requirements
 
 - CMake 3.20 or later
 - C++20 compatible compiler
-  - macOS: Xcode 14+ / Apple Clang 14+
-  - Windows: Visual Studio 2022 / MSVC 19.30+
+  - macOS: Xcode 14+ / Apple Clang 14+ (macOS 10.15+)
+  - Windows: Visual Studio 2022 / MSVC 19.30+ (Windows 10+)
 - Git (for submodule dependencies)
 
 ### Dependencies (included as submodules)

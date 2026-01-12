@@ -70,8 +70,11 @@ Get the latest version of JamWide for your platform.
 - 64-bit DAW with CLAP, VST3, or AU support
 
 ### Windows
-- Windows 10 or later
+- **Windows 10 or later (64-bit)** ⚠️
 - 64-bit DAW with CLAP or VST3 support
+- Direct3D 11 capable graphics
+
+> **Note:** Windows 7 and Windows 8 are not supported. The plugin requires Windows 10 or later with Direct3D 11.
 
 ---
 

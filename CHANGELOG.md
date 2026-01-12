@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Windows**: Spacebar no longer triggers DAW transport when typing in text fields
 - **Windows**: Caps Lock now works correctly in text fields (Bitwig/REAPER)
 
+### Changed
+- **System Requirements**: Windows 10 or later now required (Windows 7/8 no longer supported)
+
 ## [0.117] - 2026-01-12
 
 ### Added

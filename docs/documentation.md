@@ -93,8 +93,8 @@ Use the metronome to stay in time:
 
 - CMake 3.20 or later
 - C++20 compatible compiler
-  - **macOS:** Xcode 14+ / Apple Clang 14+
-  - **Windows:** Visual Studio 2022 / MSVC 19.30+
+  - **macOS:** Xcode 14+ / Apple Clang 14+ (macOS 10.15+)
+  - **Windows:** Visual Studio 2022 / MSVC 19.30+ (Windows 10+)
 - Git (for submodule dependencies)
 
 ### Clone the Repository
@@ -120,6 +120,7 @@ cmake --build build --config Release
 ### Build (Windows)
 
 **Requirements:**
+- Windows 10 or later (64-bit)
 - Visual Studio 2022 (or newer) with C++ Desktop Development workload
 - CMake 3.20+ (included with Visual Studio)
 - Git for Windows
