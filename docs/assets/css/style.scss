@@ -119,6 +119,17 @@ a {
     margin-bottom: 1rem;
   }
   
+  .beta-notice {
+    display: inline-block;
+    background: #dbeafe;
+    border: 1px solid #3b82f6;
+    color: #1e40af;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+  
   .dev-warning {
     display: inline-block;
     background: #fef3c7;
