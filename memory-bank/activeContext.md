@@ -2,11 +2,11 @@
 
 ## Current Session Focus
 
-**Date:** 2026-01-12  
+**Date:** 2026-01-13  
 **Phase:** 6 - Beta Release  
-**Status:** ✅ Beta - macOS and Windows fully tested and working
+**Status:** 🔄 macOS keyboard input bug discovered (REAPER)
 
-## Latest Build: r119
+## Latest Build: r120
 
 ### What's Working
 - ✅ Plugin loads in GarageBand, Logic Pro (AU), REAPER (CLAP/VST3) - macOS
@@ -28,20 +28,23 @@
 - ✅ Anonymous login support
 - ✅ Window size 800x1200 for AU (Logic/GarageBand compatibility)
 
-### Recent Changes (v0.117-v0.119)
+### Recent Changes (v0.117-v0.120)
 | Version | Change |
 |---------|--------|
+| v0.120 | Pulled Windows bug fix, verified macOS build works |
 | v0.119 | Windows: Message hook prevents DAW accelerators during text input |
 | v0.117 | Windows: Dummy EDIT control + IME/focus forwarding + null guards |
 | v0.108 | UI: Transmit toggle now visible (layout fix) |
 | v0.107 | Fix: License dialog responds to single click |
-| v0.106 | Default audio quality: 256 kbps |
 
 ### Known Issues
 | Issue | Platform | Status |
 |-------|----------|--------|
+| **Spacebar triggers transport instead of text input** | macOS (REAPER) | 🔴 Active - see plan-reaper-macos-input.md |
+| Spacebar works in GarageBand AU but not REAPER | macOS | REAPER intercepts keys at window level |
 | Bitwig Beta 11 plugin scan | macOS | Bitwig bug - localhost connection refused |
 | AU resize in Logic/GarageBand | macOS | Apple limitation - use fixed 800x1200 size |
+| `NinjamView` class not renamed to `JamWideView` | macOS | Low priority cleanup |
 
 ## CI/CD
 
@@ -94,10 +97,13 @@ GitHub Actions builds on every tag push:
 
 ## Priority Actions for Next Session
 
-1. **Timing guide polish** - Add tooltips, reset button, color-coded dots per offset
-2. **End-to-end audio test** - Connect when other musicians are online
-3. **Test audio transmit/receive** - Verify encoding/decoding works
-4. **State persistence test** - Save project, reload, verify settings
+1. **Fix macOS keyboard input in REAPER** - Implement plan in `plan-reaper-macos-input.md`
+   - Use local event monitor to intercept keys when `io.WantTextInput` is true
+   - Detect REAPER host via bundle ID `com.cockos.reaper`
+   - Forward consumed events to ImGui's `KeyEventResponder`
+2. **Rename `NinjamView` to `JamWideView`** - Cleanup in `gui_macos.mm`
+3. **Timing guide polish** - Add tooltips, reset button, color-coded dots per offset
+4. **End-to-end audio test** - Connect when other musicians are online
 
 ## Key Files
 

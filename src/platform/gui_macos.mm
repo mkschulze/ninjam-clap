@@ -23,10 +23,10 @@
 using namespace jamwide;
 
 //------------------------------------------------------------------------------
-// NinjamView - MTKView subclass for Metal rendering
+// JamWideView - MTKView subclass for Metal rendering
 //------------------------------------------------------------------------------
 
-@interface NinjamView : MTKView {
+@interface JamWideView : MTKView {
 @public
     std::shared_ptr<JamWidePlugin> plugin_;
 }
@@ -37,7 +37,8 @@ using namespace jamwide;
 - (void)clearPlugin;
 @end
 
-@implementation NinjamView
+@implementation JamWideView
+
 
 - (NSView*)findTextInputView {
     for (NSView* subview in self.subviews) {
@@ -55,6 +56,12 @@ using namespace jamwide;
 
     if (self) {
         plugin_ = std::move(plugin);
+        
+        // Detect if running in REAPER
+        NSString* bundleId = [[NSBundle mainBundle] bundleIdentifier];
+        if (bundleId && [bundleId isEqualToString:@"com.cockos.reaper"]) {
+            plugin_->ui_state.is_reaper_host = true;
+        }
         _commandQueue = [device newCommandQueue];
 
         self.colorPixelFormat = MTLPixelFormatBGRA8Unorm;
@@ -139,7 +146,7 @@ using namespace jamwide;
     @autoreleasepool {
         // Guard: Must have valid ImGui context and plugin
         if (!_imguiContext || !plugin_) {
-            fprintf(stderr, "[NinjamView] drawRect: early return - context=%p plugin=%p\n",
+            fprintf(stderr, "[JamWideView] drawRect: early return - context=%p plugin=%p\n",
                     (void*)_imguiContext, (void*)plugin_.get());
             return;
         }
@@ -148,7 +155,7 @@ using namespace jamwide;
         // Verify context was set
         ImGuiContext* ctx = ImGui::GetCurrentContext();
         if (!ctx) {
-            fprintf(stderr, "[NinjamView] drawRect: GetCurrentContext returned NULL!\n");
+            fprintf(stderr, "[JamWideView] drawRect: GetCurrentContext returned NULL!\n");
             return;
         }
 
@@ -229,7 +236,9 @@ using namespace jamwide;
     }
 }
 
+
 @end
+
 
 //------------------------------------------------------------------------------
 // GuiContextMacOS - Platform implementation
@@ -259,7 +268,7 @@ public:
         if (!parent) return false;
 
         NSRect frame = NSMakeRect(0, 0, width_, height_);
-        view_ = [[NinjamView alloc] initWithFrame:frame plugin:plugin_];
+        view_ = [[JamWideView alloc] initWithFrame:frame plugin:plugin_];
 
         if (!view_) return false;
 
@@ -304,7 +313,7 @@ public:
     }
 
 private:
-    NinjamView* view_;
+    JamWideView* view_;
 };
 
 GuiContext* create_gui_context_macos(std::shared_ptr<JamWidePlugin> plugin) {

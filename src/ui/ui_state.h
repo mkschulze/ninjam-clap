@@ -83,6 +83,7 @@ struct UiState {
     int chat_history_count = 0;
     char chat_input[512] = "";
     bool chat_scroll_to_bottom = false;
+    bool chat_refocus_input = false;
     bool show_chat = true;
 
     // Master
@@ -105,6 +106,10 @@ struct UiState {
 
     // Solo state
     bool any_solo_active = false;
+
+    // Host detection (for platform-specific hints)
+    bool is_reaper_host = false;
+    bool reaper_keyboard_hint_dismissed = false;
 };
 
 // Atomic snapshot for high-frequency UI reads (no state_mutex)

@@ -84,4 +84,23 @@ void ui_render_status_bar(jamwide::JamWidePlugin* plugin) {
     if (ImGui::GetCursorPosY() < after_status_y) {
         ImGui::SetCursorPosY(after_status_y);
     }
+
+    // REAPER keyboard input hint (macOS only)
+#ifdef __APPLE__
+    if (plugin->ui_state.is_reaper_host && !plugin->ui_state.reaper_keyboard_hint_dismissed) {
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.15f, 0.25f, 0.35f, 1.0f));
+        ImGui::BeginChild("ReaperHint", ImVec2(0, 28), true);
+        ImGui::TextColored(ImVec4(1.0f, 0.9f, 0.5f, 1.0f), "\xef\x81\xb1");  // Info icon (FontAwesome)
+        ImGui::SameLine();
+        ImGui::TextWrapped("Tip: Enable 'Send all keyboard input to plug-in' in the FX menu for full keyboard support.");
+        ImGui::SameLine();
+        float dismiss_x = ImGui::GetWindowContentRegionMax().x - 20.0f;
+        ImGui::SetCursorPosX(dismiss_x);
+        if (ImGui::SmallButton("X")) {
+            plugin->ui_state.reaper_keyboard_hint_dismissed = true;
+        }
+        ImGui::EndChild();
+        ImGui::PopStyleColor();
+    }
+#endif
 }

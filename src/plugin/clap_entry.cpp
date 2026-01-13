@@ -15,6 +15,10 @@
 #include "threading/run_thread.h"
 #include "third_party/picojson.h"
 
+#ifdef __APPLE__
+#include "platform/reaper_integration.h"
+#endif
+
 using namespace jamwide;
 
 //------------------------------------------------------------------------------
@@ -1101,6 +1105,11 @@ static const clap_plugin_t* factory_create_plugin(
     plugin->host = host;
     clap_plugin->plugin_data = instance;
 
+#ifdef __APPLE__
+    // Try to initialize REAPER extension API integration for keyboard focus
+    reaper_integration_init(host);
+#endif
+
     return clap_plugin;
 }
 
@@ -1119,6 +1128,9 @@ bool jamwide_entry_init(const char* path) {
 }
 
 void jamwide_entry_deinit(void) {
+#ifdef __APPLE__
+    reaper_integration_shutdown();
+#endif
 }
 
 const void* jamwide_entry_get_factory(const char* factory_id) {

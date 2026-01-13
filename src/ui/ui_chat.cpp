@@ -165,7 +165,14 @@ void ui_render_chat(jamwide::JamWidePlugin* plugin) {
     ImGui::EndChild();
 
     bool send = false;
-    ImGui::SetNextItemWidth(-40.0f);
+    ImGui::SetNextItemWidth(-50.0f);  // Leave room for Send button + padding
+    
+    // Refocus input field after sending a message
+    if (state.chat_refocus_input) {
+        ImGui::SetKeyboardFocusHere(0);
+        state.chat_refocus_input = false;
+    }
+    
     if (ImGui::InputText("##chat_input", state.chat_input,
                          sizeof(state.chat_input),
                          ImGuiInputTextFlags_EnterReturnsTrue)) {
@@ -208,6 +215,8 @@ void ui_render_chat(jamwide::JamWidePlugin* plugin) {
             }
         }
         state.chat_input[0] = '\0';
+        // Request focus on input field for next frame
+        state.chat_refocus_input = true;
     }
 
     ImGui::Unindent();

@@ -5,6 +5,16 @@ All notable changes to JamWide will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.131] - 2026-01-13
+
+### Added
+- **macOS/REAPER**: Show hint to enable "Send all keyboard input to plug-in" for full keyboard support
+- **Chat**: Input field now keeps focus after sending a message
+
+### Fixed
+- **macOS**: Simplified keyboard handling - removed experimental swizzle/monitor code
+- **Chat**: Send button positioning improved (no longer clips at edge)
+
 ## [0.119] - 2026-01-12
 
 ### Fixed
