@@ -42,7 +42,7 @@ JamWide ports the NINJAM client functionality into a cross-platform CLAP audio p
 - Soft clipping on master output
 
 ### User Interface
-- Modern ImGui-based interface
+- Dear ImGui interface
 - Native rendering (Metal on macOS, D3D11 on Windows)
 - Server browser with live user lists
 - Real-time status and connection display
