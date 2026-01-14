@@ -203,7 +203,7 @@ Copy `JamWide.vst3` to:
 
 ## Project Status
 
-⚠️ **Beta Release** — macOS tested, Windows builds successfully (testing in progress)
+✅ **Stable Release** — Tested on macOS and Windows in Ableton Live, REAPER, Bitwig Studio, Logic Pro, and GarageBand
 
 ### Features
 - [x] Core NJClient port (audio engine, networking)
