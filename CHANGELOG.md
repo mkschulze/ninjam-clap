@@ -5,6 +5,37 @@ All notable changes to JamWide will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-01-14
+
+### 🎉 First Stable Release
+
+JamWide 1.0 is the first stable release of the modern NINJAM client plugin.
+
+### Highlights
+- Full NINJAM protocol support (connect, transmit, receive audio)
+- Cross-platform: macOS (Intel + Apple Silicon) and Windows
+- Plugin formats: CLAP, VST3, Audio Unit v2
+- Tested in: Ableton Live, REAPER, Bitwig Studio, Logic Pro, GarageBand
+
+### All Features
+- Server browser with live user lists (autosong.ninjam.com)
+- Real-time chat with message history and timestamps
+- Visual timing guide for beat alignment
+- Per-channel volume, pan, mute, and solo controls
+- VU meters for all channels
+- BPM/BPI voting via chat commands
+- Anonymous login support
+- 256 kbps default audio quality (OGG/Vorbis)
+- State persistence (save/load with DAW projects)
+- Parameter automation (master volume/mute, metronome volume/mute)
+
+### Changed
+- Removed unused REAPER integration code (hwnd_info API)
+- Cleaned up final NINJAM→JamWide naming references
+
+### Fixed
+- All known issues from beta testing resolved
+
 ## [0.133] - 2026-01-14
 
 ### Fixed

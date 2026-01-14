@@ -162,7 +162,6 @@ target_include_directories(jamwide-impl PRIVATE
 if(APPLE)
     target_sources(jamwide-impl PRIVATE 
         src/platform/gui_macos.mm
-        src/platform/reaper_integration.mm
     )
 elseif(WIN32)
     target_sources(jamwide-impl PRIVATE src/platform/gui_win32.cpp)

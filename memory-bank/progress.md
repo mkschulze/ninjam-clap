@@ -1,8 +1,8 @@
 # JamWide - Implementation Progress
 
 **Project Start:** January 2026  
-**Current Build:** r135 (v0.135)
-**Status:** ✅ Beta - Ready for user testing, approaching 1.0
+**Current Build:** r137 (v1.0.0)
+**Status:** ✅ Stable Release - v1.0.0
 **Target Platforms:** Windows 10+ (MSVC), macOS 10.15+ (Xcode/Clap)  
 **Plugin Formats:** CLAP, VST3, Audio Unit v2 (via clap-wrapper)  
 **UI Framework:** Dear ImGui (Metal on macOS, D3D11 on Windows)  
@@ -149,17 +149,17 @@
 | Server browser UI | ✅ | New panel with refresh button |
 | Shared_ptr plugin keepalive | ✅ | Prevents use-after-free in run thread |
 | License callback unlock | ✅ | Release client_mutex while waiting on UI |
-| End-to-end test: connect, transmit, receive | ⬜ | Use public NINJAM server |
-| Verify multi-instance works | ⬜ | No globals except read-only descriptor |
-| State persistence test | ⬜ | Save project, reload, verify settings |
-| Parameter automation test | ⬜ | Automate master volume in DAW |
-| Memory leak check (Windows) | ⬜ | Visual Studio diagnostics |
-| Memory leak check (macOS) | ⬜ | Instruments/Leaks |
+| End-to-end test: connect, transmit, receive | ✅ | Verified with public NINJAM servers |
+| Verify multi-instance works | ✅ | No globals except read-only descriptor |
+| State persistence test | ✅ | Save project, reload, verify settings |
+| Parameter automation test | ✅ | Verified in DAW |
+| Memory leak check (Windows) | ✅ | No issues observed |
+| Memory leak check (macOS) | ✅ | No issues observed |
 | Windows build system setup | ✅ | install-win.ps1 created, VS 2022/2026 tested |
-| Test in REAPER (Win) | 🔄 | Ready for testing |
-| Test in REAPER (macOS) | ⬜ | |
-| Test in Bitwig (Win) | 🔄 | Ready for testing |
-| Test in Bitwig (macOS) | ⬜ | |
+| Test in REAPER (Win) | ✅ | Verified working |
+| Test in REAPER (macOS) | ✅ | Verified working |
+| Test in Bitwig (Win) | ✅ | Verified working |
+| Test in Bitwig (macOS) | ✅ | Verified working |
 
 **Deliverable:** Release candidate
 

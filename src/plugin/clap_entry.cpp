@@ -15,10 +15,6 @@
 #include "threading/run_thread.h"
 #include "third_party/picojson.h"
 
-#ifdef __APPLE__
-#include "platform/reaper_integration.h"
-#endif
-
 using namespace jamwide;
 
 //------------------------------------------------------------------------------
@@ -144,12 +140,12 @@ static bool plugin_init(const clap_plugin_t* clap_plugin) {
              sizeof(plugin->ui_state.server_input), "%s", "ninbot.com");
     snprintf(plugin->ui_state.username_input,
              sizeof(plugin->ui_state.username_input), "%s", "anonymous");
-#ifdef NINJAM_DEV_BUILD
-    const char* serialize_env = std::getenv("NINJAM_CLAP_SERIALIZE_AUDIOPROC");
+#ifdef JAMWIDE_DEV_BUILD
+    const char* serialize_env = std::getenv("JAMWIDE_SERIALIZE_AUDIOPROC");
     plugin->serialize_audio_proc = (serialize_env && *serialize_env &&
                                     std::strcmp(serialize_env, "0") != 0);
     if (plugin->serialize_audio_proc) {
-        NLOG("[Init] AudioProc serialization enabled (NINJAM_CLAP_SERIALIZE_AUDIOPROC)\n");
+        NLOG("[Init] AudioProc serialization enabled (JAMWIDE_SERIALIZE_AUDIOPROC)\n");
     }
 #else
     plugin->serialize_audio_proc = false;
@@ -1105,11 +1101,6 @@ static const clap_plugin_t* factory_create_plugin(
     plugin->host = host;
     clap_plugin->plugin_data = instance;
 
-#ifdef __APPLE__
-    // Try to initialize REAPER extension API integration for keyboard focus
-    reaper_integration_init(host);
-#endif
-
     return clap_plugin;
 }
 
@@ -1128,9 +1119,6 @@ bool jamwide_entry_init(const char* path) {
 }
 
 void jamwide_entry_deinit(void) {
-#ifdef __APPLE__
-    reaper_integration_shutdown();
-#endif
 }
 
 const void* jamwide_entry_get_factory(const char* factory_id) {
