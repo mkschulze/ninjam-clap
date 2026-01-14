@@ -169,10 +169,6 @@ jobs:
           **Windows:**
           - CLAP: \`C:\\Program Files\\Common Files\\CLAP\\\`
           - VST3: \`C:\\Program Files\\Common Files\\VST3\\\`
-          
-          ---
-          
-          ⚠️ **Early Development** - Not yet ready for production use
           EOF
 
       - name: Create Release
